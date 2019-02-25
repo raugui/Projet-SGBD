@@ -3,6 +3,7 @@ function chargerClasse($classname)
 { // Si le fichier n'est pas un pdf alors on charge la classe dans le dossier classes
   if($classname != 'FPDF' && $classname != 'PDF'){
     require 'D:\wamp64\www\sgbd\Projet_Test\classes/'.$classname.'.php';
+    //require 'C:\xampp\htdocs\Ecole\SGBD\Projet-SGBD/classes/'.$classname.'.php';
   }else{
     include('../PDF/'.strtolower($classname).'.php');
   }

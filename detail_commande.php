@@ -1,7 +1,7 @@
 <?php
 require "connect/connect.php";
 session_start();
-require "connect/header.php";
+//require "connect/header.php";
 $dc = new DetailCommandesManager($bdd);
 $ac = new ArticlesManager($bdd);
 $co = new CommandesManager($bdd);
@@ -134,7 +134,7 @@ if($TypeUser['type']== 'Client'){
       foreach ($detail as $donnees){
         // on recupère le statut de la commande
         $commande = $co->getCommande($donnees['idCom']);
-        //var_dump($donnees);
+        var_dump($commande);
         // on récupère la quantité
         $qt = $donnees['quantite'];
         // on récupère l'id de l'article
@@ -144,16 +144,39 @@ if($TypeUser['type']== 'Client'){
         //var_dump($prix);
         if(isset($_POST['Modif'])){
           if($_POST['idArt'] == $id_art){
+            $com = new Commandes($commande);
             // on rajoute dans le stock la quantité demandée de base
             $ac->restock($qt,$id_art);
-            // On modifie la quantité par celle qui est modifiée
+            // On recupère la quantitée qui est modifiée
             $quantite = (int)$_POST['qtModif'];
+            // On récupère la quantite de la base de donnée
+            $quantiteInitial =$dc->getListId($donnees['idCom']);
+            // on recupère la différence des deux 
+            $quantiteTotale = ((int)$quantiteInitial[0]['quantite'])-$quantite;
+            echo '<pre>';
+            var_dump($com->quantiteTotale());
+            echo '</pre>';
+            
+            var_dump($com->calculerQuantite($quantiteTotale));
+            $commandes = ([
+                'id' => (int)$commande['id'],
+                'quantiteTotale' => 'lol',
+                'idClient' => (int)$commande['idClient'],
+                'prix' => (int)$commande['prix'],
+                'statut' => $commande['statut'],
+                'poidsTotal' => (int)$commande['poidsTotal'],
+                'Preparateur' => $commande['Preparateur']
+            ]);
+            //var_dump($commandes);
+            
+            $co->updateCommande($com);
             //  var_dump($quantite);
             $qt = $quantite;
             // On modifie la valeur dans le detail de la commande
             $dc->updateArt($donnees['idArt'],$donnees['idCom'],$qt);
             // On retire du stock
             $ac->destock($quantite,$id_art);
+            
           }
         }
         echo "<tr>";
