@@ -9,6 +9,8 @@ $type = $_SESSION['type'];
 // La quantité totale d'éléments dans le tableau
 $co = new CommandesManager($bdd);
 $user = new UserManager($bdd);
+$art = new ArticlesManager($bdd);
+$dc = new DetailCommandesManager($bdd);
 //var_dump($id);
 //var_dump($listes);
 $TypeUser = $user->getUser($id);
@@ -32,14 +34,21 @@ if (isset($_POST['deleteT'])) {
     echo '</form><form method="post" action="commandes_effectues.php?terminee&id=' . $id . '" role="suppression"><td><button type="submit" name="ConfirmDeleteT" class="btn btn-danger btn-block">Oui</button></form>';
     echo '</form><form method="post" action="commandes_effectues.php?terminee" role="commandes"><td><button type="submit" class="btn btn-primary btn-block">Non</button></form>';
     exit();
-// Si réponse ok
+// Commande terminée, confirmation de suppression
 }if (isset($_POST['ConfirmDeleteT'])) {
-    $idCom = $_GET['id'];
+    $idCom = $_GET['id']; 
     $co->delete((int) $idCom);
     header('Location:commandes_effectues.php?terminee');
 }
+// Commande en cours, confirmation de suppression
 if (isset($_POST['ConfirmDeleteC'])) {
     $idCom = $_GET['id'];
+    $com = $co->getCommande($idCom);
+    $detailCom = $dc->getListId($idCom);
+    foreach ($detailCom as $detc){
+        // on ajoute en stock les produits annulés
+        $art->restock($detc['quantite'], $detc['idArt']);
+    } 
     $co->delete((int) $idCom);
     header('Location:commandes_effectues.php?enCours');
 }
