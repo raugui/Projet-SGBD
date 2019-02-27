@@ -134,7 +134,7 @@ if($TypeUser['type']== 'Client'){
       foreach ($detail as $donnees){
         // on recupère le statut de la commande
         $commande = $co->getCommande($donnees['idCom']);
-        //var_dump($donnees);
+        //var_dump($commande);
         // on récupère la quantité
         $qt = $donnees['quantite'];
         // on récupère l'id de l'article
@@ -142,13 +142,53 @@ if($TypeUser['type']== 'Client'){
         // on récupère le prix unitaire de l'article
         $prix = $ac->getArticle($id_art);
         //var_dump($prix);
+        /***********************************/
         if(isset($_POST['Modif'])){
           if($_POST['idArt'] == $id_art){
+           // var_dump($commande);
+            // On recupère la quantitée qui est modifiée
+            $quantite = (int)$_POST['qtModif'];//
+            // On récupère la quantite de la base de donnée
+            $ArticleInitial =$dc->getListId($donnees['idCom']);//
+            // on recupère la différence des deux 
+            // on récupère l'article en question et ca quantitée
+            foreach ($ArticleInitial as $qi){
+                //var_dump($qi);
+                if ($qi['idArt'] == $donnees['idArt']){
+                    /* QUANTITE */
+                    $art = $ac->getArticle($qi['idArt']);
+                    $qti = (int)$qi['quantite'];    
+                    /* POIDS */
+                    $newpoids = $dcc->calculerPoids($art['poids_unitaire'],$quantite);
+                    $poidsInit = (float)$dcc->calculerPoids($art['poids_unitaire'],$qi['quantite']);
+                    $poidsFinal = $poidsInit - $newpoids;
+                    //var_dump($newpoids,$poidsInit,$poidsFinal); 
+                    /* PRIX */
+                    $newprix = $dcc->calculerPrix($art['prix_unitaire'],$quantite) ;
+                    $prixInit = $dcc->calculerPrix($art['prix_unitaire'],$qi['quantite']) ;
+                    $prixFinal = $prixInit - $newprix;
+                   // var_dump($qi);     
+                }
+            }
+            $quantiteTotale = (int)$commande['quantiteTotale']-($qti-$quantite);
+            $poidstotal = (float)$commande['poidsTotal']-$poidsFinal;
+            $prixTotal = (int)$commande['prix']-$prixFinal;           
+            //var_dump($commande['prix'],$prixInit,$prixFinal,$prixTotal);
+            $commande = ([
+                'id' => (int)$commande['id'],
+                'quantiteTotale' => $quantiteTotale,
+                'idClient' => (int)$commande['idClient'],
+                'prix' => $prixTotal,
+                'statut' => $commande['statut'],
+                'poidsTotal' => $poidstotal,
+                'Preparateur' => $commande['Preparateur']
+            ]);
+            $com = new Commandes($commande);       
+            $co->updateCommande($com);
+            //  var_dump($quantite);
             // on rajoute dans le stock la quantité demandée de base
             $ac->restock($qt,$id_art);
-            // On modifie la quantité par celle qui est modifiée
-            $quantite = (int)$_POST['qtModif'];
-            //  var_dump($quantite);
+            
             $qt = $quantite;
             // On modifie la valeur dans le detail de la commande
             $dc->updateArt($donnees['idArt'],$donnees['idCom'],$qt);
