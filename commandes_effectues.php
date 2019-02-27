@@ -12,7 +12,6 @@ $user = new UserManager($bdd);
 $art = new ArticlesManager($bdd);
 $dc = new DetailCommandesManager($bdd);
 //var_dump($id);
-//var_dump($listes);
 $TypeUser = $user->getUser($id);
 
 $PrixTotalDeLaCommande = 'Prix total de la commande';
