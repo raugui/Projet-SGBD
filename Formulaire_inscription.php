@@ -79,7 +79,7 @@ if(isset($_POST['inscription'])){
 		if(!$m->getUser($client->login())){
 				// On envoi ce tableau a la méthode "ajouter"
 			//	var_dump($client);
-				if($m->add($client)){
+				if(!$m->add($client)){
 					header('Location:index.php?succes');
 				}else{
 					echo "<div class='alert alert-danger' role='alert'>

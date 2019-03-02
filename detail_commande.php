@@ -5,24 +5,19 @@ require "connect/header.php";
 $dc = new DetailCommandesManager($bdd);
 $ac = new ArticlesManager($bdd);
 $co = new CommandesManager($bdd);
-
-
 // Id de l'utilisateur
 $idUser = $_SESSION["id"];
-
 // connaitre le type d'utilisateur
 $user = new UserManager($bdd);
 $TypeUser = $user->getUser($idUser);
 // Id de la commande
 if($TypeUser['type'] == 'Employes'):$id = $_GET['id'];endif;
-
 if($TypeUser['type'] == 'Client'){
   if(isset($_GET['idCo'])){
     $id = $_GET['idCo'];
   }elseif(isset($_POST['Modif'])){
     $id = $_POST['idCom'];
   }elseif(isset($_POST['confirmer'])){
-
     if(isset($_POST['confirmer'])){
       // on recupère la commande
       $data = $_SESSION['data'];
@@ -69,7 +64,6 @@ if($TypeUser['type'] == 'Client'){
     $id = $_GET['id'];
   }
 }
-
 if($TypeUser['type'] == 'Admin'){
   if(isset($_GET['id'])){
     $id = $_GET['id'];
@@ -82,18 +76,15 @@ if($TypeUser['type'] == 'Admin'){
 //var_dump($id);
 // On recupère tous les articles de la commande
 $detail = $dc->getListId($id);
-
 $dcc = new Detail_commandes($detail);
 $commande = $co->getCommande($detail[0]['idCom']);
 //var_dump($id);
-
 if(!isset($_POST['confirmer'])): echo '
 <section class="container login-form">
   <section>
     <form method="post" action="" role="nouvelle_commande">
       <h1> Detail commande </h1>
       <table class="table table-dark table-striped" >
-
         <thead>
           <tr>
             <th scope="col">Désignation</th>
@@ -106,7 +97,6 @@ if(!isset($_POST['confirmer'])): echo '
         echo '  </tr>
         </thead>
         <tbody> ' ;endif;
-
 if(isset($_GET['idArt'])&&isset($_GET['idCo'])){
   $donnees = $ac->getArticle($_GET['idArt']);
   echo "</form><form method='post' action='detail_commande.php'>
@@ -122,8 +112,6 @@ if(isset($_GET['idArt'])&&isset($_GET['idCo'])){
   exit();
   //header('Location:detail_commande?idArt='.$_GET['idArt'].'&amp;idCo='.$_GET['idCo'].'&amp;idMod='.$valeur.'');
 }
-
-
 /* ------------------------------------------------------- */
 /* -----------------------CLIENT-------------------------- */
 /* ------------------------------------------------------- */
@@ -134,7 +122,7 @@ if($TypeUser['type']== 'Client'){
       foreach ($detail as $donnees){
         // on recupère le statut de la commande
         $commande = $co->getCommande($donnees['idCom']);
-        //var_dump($donnees);
+        //var_dump($commande);
         // on récupère la quantité
         $qt = $donnees['quantite'];
         // on récupère l'id de l'article
@@ -142,13 +130,53 @@ if($TypeUser['type']== 'Client'){
         // on récupère le prix unitaire de l'article
         $prix = $ac->getArticle($id_art);
         //var_dump($prix);
+        /***********************************/
         if(isset($_POST['Modif'])){
           if($_POST['idArt'] == $id_art){
+           // var_dump($commande);
+            // On recupère la quantitée qui est modifiée
+            $quantite = (int)$_POST['qtModif'];//
+            // On récupère la quantite de la base de donnée
+            $ArticleInitial =$dc->getListId($donnees['idCom']);//
+            // on recupère la différence des deux 
+            // on récupère l'article en question et ca quantitée
+            foreach ($ArticleInitial as $qi){
+                //var_dump($qi);
+                if ($qi['idArt'] == $donnees['idArt']){
+                    /* QUANTITE */
+                    $art = $ac->getArticle($qi['idArt']);
+                    $qti = (int)$qi['quantite'];    
+                    /* POIDS */
+                    $newpoids = $dcc->calculerPoids($art['poids_unitaire'],$quantite);
+                    $poidsInit = (float)$dcc->calculerPoids($art['poids_unitaire'],$qi['quantite']);
+                    $poidsFinal = $poidsInit - $newpoids;
+                    //var_dump($newpoids,$poidsInit,$poidsFinal); 
+                    /* PRIX */
+                    $newprix = $dcc->calculerPrix($art['prix_unitaire'],$quantite) ;
+                    $prixInit = $dcc->calculerPrix($art['prix_unitaire'],$qi['quantite']) ;
+                    $prixFinal = $prixInit - $newprix;
+                   // var_dump($qi);     
+                }
+            }
+            $quantiteTotale = (int)$commande['quantiteTotale']-($qti-$quantite);
+            $poidstotal = (float)$commande['poidsTotal']-$poidsFinal;
+            $prixTotal = (int)$commande['prix']-$prixFinal;           
+            //var_dump($commande['prix'],$prixInit,$prixFinal,$prixTotal);
+            $commande = ([
+                'id' => (int)$commande['id'],
+                'quantiteTotale' => $quantiteTotale,
+                'idClient' => (int)$commande['idClient'],
+                'prix' => $prixTotal,
+                'statut' => $commande['statut'],
+                'poidsTotal' => $poidstotal,
+                'Preparateur' => $commande['Preparateur']
+            ]);
+            $com = new Commandes($commande);       
+            $co->updateCommande($com);
+            //  var_dump($quantite);
             // on rajoute dans le stock la quantité demandée de base
             $ac->restock($qt,$id_art);
-            // On modifie la quantité par celle qui est modifiée
-            $quantite = (int)$_POST['qtModif'];
-            //  var_dump($quantite);
+            
             $qt = $quantite;
             // On modifie la valeur dans le detail de la commande
             $dc->updateArt($donnees['idArt'],$donnees['idCom'],$qt);
@@ -178,11 +206,9 @@ if($TypeUser['type']== 'Client'){
       echo "</table></form><h2><span class='badge badge-light' style='font-size:15'>Prix total de la commande : <span style='color:red'>".$prixTotal."</span>€</span>";
     endif;
   }
-
 /* ------------------------------------------------------- */
 /* ---------------------EMPLOYES-------------------------- */
 /* ------------------------------------------------------- */
-
 if(($TypeUser['type']== 'Employes')OR($TypeUser['type']== 'Admin')){
   // Si on clique sur impression
   if(isset($_POST['pdf'])){

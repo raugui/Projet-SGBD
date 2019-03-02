@@ -9,10 +9,10 @@ $type = $_SESSION['type'];
 // La quantité totale d'éléments dans le tableau
 $co = new CommandesManager($bdd);
 $user = new UserManager($bdd);
+$art = new ArticlesManager($bdd);
+$dc = new DetailCommandesManager($bdd);
 //var_dump($id);
-//var_dump($listes);
 $TypeUser = $user->getUser($id);
-
 $PrixTotalDeLaCommande = 'Prix total de la commande';
 $QuantiteTotaleArticle = 'Quantite totale darticles';
 $PoidsTotalCommande = 'Poids total de la commande';
@@ -32,14 +32,21 @@ if (isset($_POST['deleteT'])) {
     echo '</form><form method="post" action="commandes_effectues.php?terminee&id=' . $id . '" role="suppression"><td><button type="submit" name="ConfirmDeleteT" class="btn btn-danger btn-block">Oui</button></form>';
     echo '</form><form method="post" action="commandes_effectues.php?terminee" role="commandes"><td><button type="submit" class="btn btn-primary btn-block">Non</button></form>';
     exit();
-// Si réponse ok
+// Commande terminée, confirmation de suppression
 }if (isset($_POST['ConfirmDeleteT'])) {
-    $idCom = $_GET['id'];
+    $idCom = $_GET['id']; 
     $co->delete((int) $idCom);
     header('Location:commandes_effectues.php?terminee');
 }
+// Commande en cours, confirmation de suppression
 if (isset($_POST['ConfirmDeleteC'])) {
     $idCom = $_GET['id'];
+    $com = $co->getCommande($idCom);
+    $detailCom = $dc->getListId($idCom);
+    foreach ($detailCom as $detc){
+        // on ajoute en stock les produits annulés
+        $art->restock($detc['quantite'], $detc['idArt']);
+    } 
     $co->delete((int) $idCom);
     header('Location:commandes_effectues.php?enCours');
 }
@@ -157,7 +164,6 @@ if (isset($_POST['ConfirmDeleteC'])) {
                             }
                         }
                     }
-
                     /* ------------------------------------------------------- */
                     /* ---------------------EMPLOYES-------------------------- */
                     /* ------------------------------------------------------- */
@@ -169,7 +175,9 @@ if (isset($_POST['ConfirmDeleteC'])) {
                         if (!$commandes) {
                             echo "<div class='alert alert-danger' role='alert'>Il n'y a pas de commandes.</div>";
                         } elseif (isset($_GET['enCours'])) {
-                            ?>            <th scope="col">Détail de la commande</th>
+                            ?>            
+                        <th scope="col">Poids total de la commande</th>
+                        <th scope="col">Détail de la commande</th>
                         <th scope="col">Nom du client</th>
                         </tr>
                         </thead> <?php
@@ -188,11 +196,11 @@ if (isset($_POST['ConfirmDeleteC'])) {
                                     echo $message;
                                 }
                                 echo "<td scope='row'>" . $donnees['poidsTotal'] . "kg</td>";
-                                echo "<td scope='row'>";
+                                
                                 if ((int) $donnees['statut'] == 0) {
-                                    echo "<a href='detail_commande.php?id=" . $donnees['id'] . "' name='commande' class='btn btn-link'>Détail</a>";
+                                    echo "<td><a href='detail_commande.php?id=" . $donnees['id'] . "' name='commande' class='btn btn-link'>Détail</a>";
                                 }
-                                echo "<td scope='row'>" . $nCl['societe'];
+                                echo "<td scope='row'>" . $nCl['societe']. "</td";
                                 echo "</td></tr>";
                                 $cpt++;
                             }
@@ -200,7 +208,9 @@ if (isset($_POST['ConfirmDeleteC'])) {
                             echo "<div class='alert alert-danger' role='alert'>Il n'y a pas de commandes en cours.</div>";
                         }
                     } elseif (isset($_GET['terminee'])) {
-                        ?>            <th scope="col">Nom du client</th>
+                        ?>
+                        <th scope="col">Poids total de la commande</th>
+                        <th scope="col">Nom du client</th>
                         <th scope="col">Nom du préparateur</th>
                         </tr>
                         </thead> <?php
@@ -231,7 +241,6 @@ if (isset($_POST['ConfirmDeleteC'])) {
                         }
                     }//Fin du Get terminee
                 }
-
                 /* ------------------------------------------------------- */
                 /* ------------------------ADMIN-------------------------- */
                 /* ------------------------------------------------------- */ elseif ($TypeUser['type'] == 'Admin') {
@@ -281,7 +290,6 @@ if (isset($_POST['ConfirmDeleteC'])) {
                         <th scope="col">Action</th>
                         </tr>
                         </thead> <?php
-
                 // Trie tous les articles par leurs quantitée
                 if ((isset($_GET['trieArt']))&&((!isset($_SESSION['valeurArt'])) OR ($_SESSION['valeurArt'] == 2)))  {
                     array_multisort(array_column($commandes, "quantiteTotale"), SORT_DESC, $commandes);

@@ -12,7 +12,7 @@ if(isset($_POST['update'])){
     $psw = trim(htmlspecialchars($_POST['psw1']));
       // On crée un tableau avec tous les champs
       $donnees = ([
-        "id" => $id,
+        "id" => $_POST['id'],
         "nom" => trim(htmlspecialchars($_POST['nom'])),
         "prenom" => trim(htmlspecialchars($_POST['prenom'])),
         "dateNaiss" => $_POST['dateNaiss'],
@@ -25,10 +25,10 @@ if(isset($_POST['update'])){
         "societe" => trim(htmlspecialchars($_POST['societe'])),
         "login" => trim(htmlspecialchars($_POST['login'])),
         "psw" => $psw,
-        "type" => $enCours['type']
+        "type" => ucfirst(trim(htmlspecialchars($_POST['type'])))
       ]);
       $detail = new User($donnees);
-      var_dump($detail);
+     // var_dump($detail);exit();
         // On envoi ce tableau a la méthode "mettre a jours"
         if(!$em->updateUser($detail)){
           header('Location:accueil.php?succes');
@@ -83,6 +83,9 @@ if(isset($_POST['update'])){
               <input type="user" name="societe" class="form-control" placeholder="Societe" value="<?php echo $enCours['societe'];?>"/>
             </div>
             <div class="form-group">
+              <input type="user" name="type" required class="form-control" maxlength="10" placeholder="type" value="<?php echo $enCours['type'];?>"/>
+            </div>
+            <div class="form-group">
               <input type="user" name="login" required class="form-control" placeholder="Nom d'utilisateur" value="<?php echo $enCours['login'];?>" />
             </div>
             <div class="form-group">
@@ -93,6 +96,7 @@ if(isset($_POST['update'])){
               <input type="password" name="psw2" required class="form-control" placeholder="Mot de passe" />
               <span class="glyphicon glyphicon-lock"></span>
             </div>
+             <input type="hidden" name="id" required class="form-control" value="<?php echo $id;?>" />
             <button type="submit" name="update" class="btn btn-primary btn-block">Modifier</button>
           </form>
       <script src="assets/bootstrap/js/bootstrap.min.js"></script>
@@ -270,7 +274,7 @@ if(isset($_POST['update'])){
         <section class="container login-form">
           <section>
             <form method="post" action="" role="login">
-              <button type="submit" name="newUser" class="btn btn-primary">Ajouter un utilisateur</button>
+              <button type="submit" name="newUser" class="btn btn-primary">Ajouter un employé</button>
               <button type="submit" name="users" class="btn btn-primary">Consulter la liste des utilisateurs</button>
             </form>
         <script src="assets/bootstrap/js/bootstrap.min.js"></script>
