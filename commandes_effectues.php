@@ -14,7 +14,7 @@ $dc = new DetailCommandesManager($bdd);
 //var_dump($id);
 $TypeUser = $user->getUser($id);
 $PrixTotalDeLaCommande = 'Prix total de la commande';
-$QuantiteTotaleArticle = 'Quantite totale darticles';
+$QuantiteTotaleArticle = "Quantite totale d'articles";
 $PoidsTotalCommande = 'Poids total de la commande';
 //var_dump($co->getListId($id));
 // Si suppression commande en cours

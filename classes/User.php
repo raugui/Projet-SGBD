@@ -138,8 +138,10 @@ class User {
     }
 
     public function setTelephone($telephone){
-        if (filter_var($telephone,FILTER_VALIDATE_INT)){
-            $this->_telephone = $telephone;
+        if(strlen($telephone) == 9){       
+            if (filter_var($telephone,FILTER_VALIDATE_INT)){
+                $this->_telephone = $telephone;
+            }
         }else{
           return 'Numéro de téléphone invalide.';
         }
