@@ -104,8 +104,6 @@ if(isset($_GET['idsupp'])){
           }
 
 
-// FOnctionne pas
-
   }else{
 
 

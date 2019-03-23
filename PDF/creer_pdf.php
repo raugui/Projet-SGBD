@@ -27,7 +27,7 @@ $pdf->SetFont('Arial','B',16);
 $pdf->Text(90,8,utf8_decode(strtoupper('Commande')));
 // Infos de la commande calées à gauche
 $pdf->setFontSize(10);
-$pdf->Text(12,103,utf8_decode('Date de préparation : '.date('m-d-y')));
+$pdf->Text(12,103,utf8_decode('Date de préparation : '.date('d-m-y')));
 $pdf->Text(12,108,utf8_decode('Numéro de commande : '.$client['idCom']));
 
 // Infos du préparateur
